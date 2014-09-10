@@ -13,13 +13,18 @@ describe Her::Model::Introspection do
           stub.put("/users/1")    { |env| [200, {}, { :id => 1, :name => "Tobias Funke" }.to_json] }
           stub.delete("/users/1") { |env| [200, {}, { :id => 1, :name => "Tobias Funke" }.to_json] }
           stub.get("/projects/1/comments") { |env| [200, {}, [{ :id => 1, :body => "Hello!" }].to_json] }
+          stub.get("/users/2")    { |env| [200, {}, { :id => 2, :name => "Lindsay Fünke", :role => { :id => 1, name: "Member" }, :comments => [{ :id => 1, :body => "They're having a FIRESALE?", :user_id => 2 }] }.to_json] }
         end
       end
 
-      spawn_model "Foo::User"
+      spawn_model "Foo::User" do
+        has_many :comments, class_name: "Foo::Comment"
+        has_one :role
+      end
       spawn_model "Foo::Comment" do
         collection_path "projects/:project_id/comments"
       end
+      spawn_model "Foo::Role"
     end
 
     describe "#inspect" do
@@ -44,6 +49,12 @@ describe Her::Model::Introspection do
       it "support dash on attribute" do
         @user = Foo::User.new(:'life-span' => "3 years")
         @user.inspect.should include("life-span=\"3 years\"")
+      end
+
+      it "omits associations' detail attributes" do
+        @user = Foo::User.find(2)
+        @user.inspect.should include("role=#<Foo::Role>")
+        @user.inspect.should include("comments=[#<Foo::Comment>(1)]")
       end
     end
 
