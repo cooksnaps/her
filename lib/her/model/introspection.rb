@@ -27,6 +27,10 @@ module Her
           "#{value[0..50]}...".inspect
         elsif value.is_a?(Date) || value.is_a?(Time)
           %("#{value}")
+        elsif value.is_a?(Her::Model)
+          "#<#{value.class}>"
+        elsif value.is_a?(Her::Collection)
+          "[#<#{value.first.class}>(#{value.size})]"
         else
           value.inspect
         end
